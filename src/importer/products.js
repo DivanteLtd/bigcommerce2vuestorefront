@@ -3,10 +3,10 @@ const sendToElastic = require('../common/sendToElastic.js')
 
 
 const importer = ({ config, elasticClient, apiConnector }) => {
-  apiConnector(config.bc).get('/products').then(
+  apiConnector(config.bc).get('/catalog/products?include=variants,images').then(
     (result) => {
-      for (let product of result) {
-          productTemplate.fill(product, { apiConnector, elasticClient }).then(converted => {
+      for (let product of result.data) {
+          productTemplate.fill(product, { apiConnector, elasticClient, config }).then(converted => {
             sendToElastic(converted, 'product', { config, elasticClient })
           })
         }

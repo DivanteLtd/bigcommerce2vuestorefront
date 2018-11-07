@@ -8,6 +8,7 @@
   "dependencies": {
     "commander": "^2.19.0",
     "elasticsearch": "^15.1.1",
+    "moment": "^2.22.2",
     "node-bigcommerce": "^3.0.0"
   }
 }

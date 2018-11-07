@@ -3,11 +3,10 @@ const sendToElastic = require('../common/sendToElastic')
 
 
 const importer = ({ config, elasticClient, apiConnector }) => {
-  apiConnector(config.bc).get('/categories').then(
+  apiConnector(config.bc).get('/catalog/categories').then(
     (result) => {
-      console.log(result)
-      for (let category of result) {
-        categoryTemplate.fill(category, { apiConnector, elasticClient }).then(converted => {
+      for (let category of result.data) {
+        categoryTemplate.fill(category, { apiConnector, elasticClient, config }).then(converted => {
           sendToElastic(converted, 'category', { config, elasticClient })
         })
       }

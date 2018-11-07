@@ -2,7 +2,7 @@ const config = require('../../config')
 
 const extractSubcategories = async (parent_id, apiConnector) => {
 
-  let parsed = await apiConnector(config.bc).get(`/categories?parent_id=${parent_id}`)
+  let parsed = await apiConnector(config.bc).get(`/catalog/categories?parent_id=${parent_id}`)
   let subcats = []
   if (parsed.length > 0) {
     for (let child of parsed) {
