@@ -1,13 +1,8 @@
 const config = require('../../config')
-const BigCommerce = require('node-bigcommerce');
-const connector = (config) => {
-  return new BigCommerce(config);
-}
 
+const extractSubcategories = async (parent_id, apiConnector) => {
 
-const extractSubcategories = async (parent_id) => {
-
-  let parsed = await connector(config.bc).get(`/categories?parent_id=${parent_id}`)
+  let parsed = await apiConnector(config.bc).get(`/categories?parent_id=${parent_id}`)
   let subcats = []
   if (parsed.length > 0) {
     for (let child of parsed) {
@@ -24,7 +19,7 @@ const extractSubcategories = async (parent_id) => {
         "include_in_menu": 1,
         "name": child.name,
         "id": child.id,
-        "children_data": child.id !== parent_id && await extractSubcategories(child.id)
+        "children_data": child.id !== parent_id && await extractSubcategories(child.id, apiConnector)
       }
       subcats.push(childData)
     }
@@ -36,7 +31,7 @@ const extractSubcategories = async (parent_id) => {
 
 
 
-const fill = async (source) => {
+const fill = async (source, { apiConnector, elasticClient }) => {
 
   let {
     id,
@@ -48,7 +43,7 @@ const fill = async (source) => {
   } = source
 
   console.log(slug)
-  let children = await extractSubcategories(parseInt(id))
+  let children = await extractSubcategories(parseInt(id), apiConnector)
   let output = {
     "entity_type_id": 3,
     "attribute_set_id": 0,

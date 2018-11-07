@@ -1,4 +1,4 @@
-const extractCategories = (categories) => {
+const extractCategories = (categories, apiConnector) => {
   let output = []
 
   for (let categoryId of categories) {
@@ -11,7 +11,7 @@ const extractCategories = (categories) => {
 }
 
 
-const fill = (source) => {
+const fill = async (source, { apiConnector, elasticClient }) => {
 
   let output = {
     "category_ids": source.categories,
