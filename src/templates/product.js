@@ -10,11 +10,15 @@ const extractCategories = (categories, apiConnector) => {
 
   return output
 }
-
+const modifierOptions = async (product, { apiConnector, elasticClient, config }) => {
+  return apiConnector(config.bc).get('/catalog/products/' + product.id + '/modifiers').catch(err => console.error(err))
+}
 const options = async (product, { apiConnector, elasticClient, config }) => {
   return apiConnector(config.bc).get('/catalog/products/' + product.id + '/options').catch(err => console.error(err))
 }
-
+const customFields = async (product, { apiConnector, elasticClient, config }) => {
+  return apiConnector(config.bc).get('/catalog/products/' + product.id + '/custom-fields').catch(err => console.error(err))
+}
 const fill = async (source, { apiConnector, elasticClient, config }) => {
   let output = {
     "category_ids": source.categories,
@@ -95,7 +99,23 @@ const fill = async (source, { apiConnector, elasticClient, config }) => {
       }
     })
   }
+  // TODO: we need to get custom_attributes for products and store it to product.custom_attributes { attribute_code, value }
+  const productCustomFields = await customFields(source, { apiConnector, elasticClient, config })
+  if (productCustomFields && productCustomFields.data.length >0) {
+    process.exit(-1)
+    output.custom_attributes = productCustomFields.data.map(po => {
+      return {
+        attribute_code: po.name,
+        value: po.value,
+        label: po.name
+      }
+    })
+  }
+
+  // TODO: BigCommerce's modifier_options => Magento's custom_options
+  const prodcutCustomOptions = await modifierOptions(source, { apiConnector, elasticClient, config })
   console.log(productOptions)
+  console.log(productCustomFields)
   console.log(source)
   console.log(output)
   
