@@ -81,8 +81,8 @@ const fill = async (source, { apiConnector, elasticClient, config }) => {
   const productOptions = await options(source, { apiConnector, elasticClient, config })
   if (productOptions && productOptions.data.length >0) {
     output.configurable_options = productOptions.data.map(po => {
-      return {
-        id: po.id,// TODO: we need attribute_id + attribute_code here
+      return { // TODO: we need to populate product's : product.color_options and product.size_options to make forntend filters work properly
+        id: po.id,// TODO: we need attribute_id + attribute_code here - we need to populate attribute dictionaries
         product_id: output.id,
         label: po.display_name,
         position: po.sort_order,
