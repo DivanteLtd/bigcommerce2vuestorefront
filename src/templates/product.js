@@ -1,14 +1,11 @@
 const moment = require('moment')
-const url = require('url');
+const removeQueryString = require('../common/removeQueryString')
 
-const removeQueryString = (sourceUrl) => {
-  // split url into distinct parts
-  // (full list: https://nodejs.org/api/url.html#url_url_parse_urlstr_parsequerystring_slashesdenotehost)
-  var obj = url.parse(sourceUrl);
-  // remove the querystring
-  obj.search = obj.query = "";
-  // reassemble the url
-  return url.format(obj);
+const trim = (s, t) => {
+  var tr, sr
+  tr = t.split('').map(e => `\\\\${e}`).join('')
+  sr = s.replace(new RegExp(`^[${tr}]+|[${tr}]+$`, 'g'), '')
+  return sr
 }
 
 const extractCategories = (categories, apiConnector) => {
@@ -32,73 +29,64 @@ const customFields = async (product, { apiConnector, elasticClient, config }) =>
   return apiConnector(config.bc).get('/catalog/products/' + product.id + '/custom-fields').catch(err => console.error(err))
 }
 const fill =  (source, { apiConnector, elasticClient, config }) =>  new Promise( (resolve, reject) => {
+    const filter_options = {}
     let output = {
       "category_ids": source.categories,
-      "entity_type_id": 4,
-      "attribute_set_id": 11,
       "type_id": "simple", // TODO: add othe product types
       "sku": source.sku,
       "has_options": source.options && source.options.length > 0, // todo
       "required_options": 0,
-      "created_at": moment(source.created_at).toJSON(),
-      "updated_at": moment(source.updated_at).toJSON(),
+//      "created_at": moment(source.created_at).toJSON(),
+//      "updated_at": moment(source.updated_at).toJSON(),
       "status": 1,
-      "accessories_size": null,
       "visibility": source.is_visible ? 4 : 0,
       "tax_class_id": source.tax_class_id,
-      "is_recurring": false,
       "description": source.description,
-      "meta_keyword": null,
-      "short_description": "",
       "name": source.name,
-      "meta_title": null,
       "image": source.images ? removeQueryString(source.images[0].url_standard) : '',
-      "meta_description": null,
       "thumbnail": source.images ? removeQueryString(source.images[0].url_thumbnail) : '',
       "media_gallery": source.images ? source.images.map(si => {  return { image: removeQueryString(si.url_standard) } }) : null,
-      "url_key": source.custom_url.url,
-      "country_of_manufacture": null,
-      "url_path": source.custom_url.url,
-      "image_label": null,
-      "small_image_label": null,
-      "thumbnail_label": null,
-      "gift_wrapping_price": null,
+      "url_key": trim(source.custom_url.url, '/'),
+      "url_path": trim(source.custom_url.url, '/'),
       "weight": source.weight,
       "price": source.price,
       "special_price": null,
-      "msrp": null,
       "news_from_date": null,
       "news_to_date": null,
       "special_from_date": null,
       "special_to_date": null,
-      "is_salable": true,
       "stock_item": {
         "is_in_stock": source.inventory_tracking === 'none' ? true : source.inventory_level > 0
       },
       "id": source.id,
       "category": extractCategories(source.categories),
-      "stock":{
+      "stock":{ // TODO: Add stock quantity - real numbers
         "is_in_stock": true
       },
       "configurable_children": source.variants ? source.variants.map(sourceVariant => {
         let child = {
           "sku": sourceVariant.sku,
-          "price": sourceVariant.price,
+          "price": sourceVariant.price ? sourceVariant.price : source.price,
           "image": removeQueryString(sourceVariant.image_url),
           "is_salable": !sourceVariant.purchasing_disabled,
           "product_id": source.id
         }
         sourceVariant.option_values.map((ov) => {
+          if (!filter_options[ov.option_display_name + '_options']) filter_options[ov.option_display_name + '_options'] = new Set() // we need to aggregate the options from child items
+          filter_options[ov.option_display_name + '_options'].add(ov.label)
+          child[ov.option_display_name] = ov.label
           child['prodopt-' + ov.option_id] = ov.id // our convention is to store the product options as a attributes with the names = prodopt-{{option_id}}
         })
         return child
       }) : null
     }
+    for (let key in filter_options) {
+      output[key] = Array.from(filter_options[key])
+    }
     const subPromises = []
     subPromises.push(options(source, { apiConnector, elasticClient, config }).then(productOptions => {
       if (productOptions && productOptions.data.length >0) {
         output.type_id = "configurable"
-        console.log(productOptions)
         output.configurable_options = productOptions.data.map(po => {
           return { // TODO: we need to populate product's : product.color_options and product.size_options to make forntend filters work properly
             id: po.id,// TODO: LETS STORE THE ATTRIBUTES DICTIONARY JUST FOR attr config / type - we don't need the available options (which is risky updating Elastic)
@@ -130,6 +118,7 @@ const fill =  (source, { apiConnector, elasticClient, config }) =>  new Promise(
             label: po.name
           }
         })
+        output[po.name] = po.value
       }
     }))
 
@@ -139,7 +128,7 @@ const fill =  (source, { apiConnector, elasticClient, config }) =>  new Promise(
 
     Promise.all(subPromises).then((results) => {
         // console.log(output)
-        console.log('Product ' + output.name + ' - ' + output.sku + ' ' + output.type_id +': imported!')
+        console.log('Product ' + output.name + ' - ' + output.sku + ' ' + output.type_id + ' - price: ' + output.price + ': imported!')
               
         resolve(output)
       }

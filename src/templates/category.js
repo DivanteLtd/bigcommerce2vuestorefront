@@ -1,4 +1,5 @@
 const config = require('../../config')
+const removeQueryString = require('../common/removeQueryString')
 
 const extractSubcategories = async (parent_id, apiConnector) => {
 
@@ -8,16 +9,12 @@ const extractSubcategories = async (parent_id, apiConnector) => {
     for (let child of parsed) {
 
       let childData = {
-        "entity_type_id": 3,
-        "attribute_set_id": 0,
         "parent_id": parent_id,
-        "created_at": "2018-10-12",
-        "updated_at": "2018-10-12",
-        "position": 0,
-        "children_count": 1,
-        "available_sort_by": null,
+        "position": child.sort_order,
+        "children_count": 1,// TODO: update children count
         "include_in_menu": 1,
         "name": child.name,
+        "url_key": child.custom_url ? removeQueryString(child.custom_url.url) : '',
         "id": child.id,
         "children_data": child.id !== parent_id && await extractSubcategories(child.id, apiConnector)
       }
@@ -36,33 +33,28 @@ const fill = async (source, { apiConnector, elasticClient }) => {
   let {
     id,
     description,
+    is_visible,
     name,
-    parent,
-    slug,
+    parent_id,
+    custom_url,
+    sort_order
 
   } = source
-
-  console.log(slug)
   let children = await extractSubcategories(parseInt(id), apiConnector)
   let output = {
-    "entity_type_id": 3,
-    "attribute_set_id": 0,
-    "parent_id": parent,
-    "created_at": "2018-10-12",
-    "updated_at": "2018-10-12",
-    "is_active": true,
-    "position": 0,
-    "level": 2,
+    "parent_id": parent_id,
+    "is_active": is_visible,
+    "position": sort_order,
+    "level": 2, // level 1 = root category
     "children_count": children.length,
-    "product_count": 1,
+    "product_count": 1, // TODO: update this value properly
     "available_sort_by": null,
     "include_in_menu": 1,
     "name": name,
     "id": id,
     "children_data": children,
-    "is_anchor": "1",
     "path": `1/${id}`,
-    "url_key": slug
+    "url_key": removeQueryString(custom_url.url)
   };
 
   /*let childrenData =
