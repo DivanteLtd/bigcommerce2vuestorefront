@@ -89,7 +89,7 @@ const fill =  (source, { apiConnector, elasticClient, config }) =>  new Promise(
           "product_id": source.id
         }
         sourceVariant.option_values.map((ov) => {
-          child['prodopt-' + ov.id] = ov.option_id // our convention is to store the product options as a attributes with the names = prodopt-{{option_id}}
+          child['prodopt-' + ov.option_id] = ov.id // our convention is to store the product options as a attributes with the names = prodopt-{{option_id}}
         })
         return child
       }) : null
