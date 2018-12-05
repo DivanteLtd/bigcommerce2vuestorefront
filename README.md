@@ -3,7 +3,7 @@ This projects bring You the BigCommerce support as a backend platform for [Vue S
 
 Vue Storefront is a standalone PWA storefront for your eCommerce, possible to connect with any eCommerce backend (eg. Magento, Pimcore, WooCommerce, BigCommerce or Shopware) through the API.
 
-[![See how it works!](https://github.com/DivanteLtd/vue-storefront/raw/master/doc/media/Fil-Rakowski-VS-Demo-Youtube.png)](https://www.youtube.com/watch?v=L4K-mq9JoaQ)
+[![See how it works!](https://github.com/DivanteLtd/vue-storefront/raw/master/docs/.vuepress/public/Fil-Rakowski-VS-Demo-Youtube.png)](https://www.youtube.com/watch?v=L4K-mq9JoaQ)
 
 Sign up for a demo at https://vuestorefront.io/.
 
