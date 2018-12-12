@@ -29,13 +29,80 @@ TODO:
 
 ## Installation guide
 
-First, please do install Vue Storefront. Here You can find the [official installation guide](https://divanteltd.github.io/vue-storefront/guide/installation/linux-mac.html). 
-
 Requirements:
 - Node 10,
 - Yarn package manager
 
-Then please execute the following steps:
+First, please do install Vue Storefront. Here You can find the [official installation guide](https://divanteltd.github.io/vue-storefront/guide/installation/linux-mac.html). 
+
+After installing the Vue Storefront please open the `vue-storefront-api/config/elastic.schema.product.extension.json` file and modify to this form:
+
+```json
+{
+   "properties": {
+       "position": {"type": "integer"},
+       "tax_class_id": {"type": "integer"},
+       "required_options": {"type": "integer"},
+       "has_options": {"type": "integer"} ,
+       "Size_options": {"type": "keyword"},
+       "Color_options": {"type": "keyword"}
+    }
+}
+```
+
+Then, still in the `vue-storefront-api` folder execute:
+
+```
+npm run db new
+```
+
+This command will clear the database and make it ready for initial BigCommerce import.
+
+Then modify the `vue-storefront-api/config/local.json` by adding the BigCommerce CDN to whitelist:
+
+```json
+  "imageable": {
+    "namespace": "",
+    "maxListeners": 512,
+    "imageSizeLimit": 1024,
+    "timeouts": {
+      "convert": 5000,
+      "identify": 100,
+      "download": 1000
+    },
+    "whitelist": {
+      "allowedHosts": [
+        ".*bigcommerce.com"
+      ],
+      "trustedHosts": [
+        ".*bigcommerce.com"
+      ]
+    },
+    "keepDownloads": true,
+    "maxDownloadCacheSize": 1000,
+    "tmpPathRoot": "/tmp"
+  },
+```
+
+The last step before using this importer is to modify the `vue-storefront/config/local.json` file by modifying the following options:
+
+```json
+{
+  "cart": {
+    "synchronize": false,
+    "synchronize_totals": false
+   },
+  "images": {
+    "useExactUrlsNoProxy": false,
+    "baseUrl": "http://localhost:8080/img?action=resize&width={{width}}&height={{height}}&url={{url}}"
+  },
+  "products": {
+    "defaultFilters": ["Color", "Size", "price"]
+  }
+}
+```
+
+Then, please go to to home directory for Your JS projects and execute the following steps:
 ```bash
 git clone https://github.com/DivanteLtd/bigcommerce2vuestorefront.git
 cd bigcommerce2vuestorefront
