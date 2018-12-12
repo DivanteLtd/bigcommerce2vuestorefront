@@ -27,6 +27,10 @@ TODO:
 - Add on-demand indexation based on BigCommerce web-hooks,
 - Add delta-main indexing scheme indexing records modified after ...
 
+## Demo
+
+Check out our [**BigCoommerce integration demo**](https://bigcommerce.storefrontcloud.io/c/shop-all-23). We've used standard Vue Storefront theme + default demo products set from BigCommerce test instance. Nothing special ;) But works pretty fast!
+
 ## Installation guide
 
 Requirements:
